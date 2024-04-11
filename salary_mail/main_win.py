@@ -1,3 +1,4 @@
+import os
 import threading
 import datetime
 import base64
@@ -182,7 +183,7 @@ class MainWin(tk.Tk):
 
     def set_default_info(self):
         '''设置默认初始值'''
-        self.subject.set('{}年{}月工资明细'.format(*self._get_year_month()))
+        self.subject.set('{}年{}月工资条'.format(*self._get_year_month()))
         try:
             sender = self.db.session.query(SalaryEmail).filter(SalaryEmail.field_name=='sender').first()
             sender_text = sender.field_value if sender else ""
@@ -298,6 +299,7 @@ class SendEmail(object):
                 self._send_email(smtp=smtp, sender=sender_text, sender_name=sender_name_text, sign=sign_text, date=date, info_row=row)
             except Exception as e:
                 try:
+                    smtp = self._login_smpt() # 第一次邮件发送失败后，再尝试第二次发送邮件时，重新登录下邮箱
                     self._send_email(smtp=smtp, sender=sender_text, sender_name=sender_name_text, sign=sign_text,
                                      date=date, info_row=row)
                 except Exception as e:
@@ -350,31 +352,37 @@ class SendEmail(object):
             <html>
             <body>
             <style type="text/css">
-        			.info{
+        			.info{						
         				text-align: center;
+						border-collapse: collapse;
+						border: 1px solid #000000;
         			}
-        			.info tr th{
-        				padding: 2px 10px;
+        			.info tr th,
+					.info tr td{
+        				padding: 2px 8px; 
         			}
+					.info th{
+						BACKGROUND-COLOR: #00b0f0
+					}
         		</style>
-        		<table class="info" border="1">
-        		    <caption>%s</caption>
+        		<table class="info" border="1" cellspacing="0">
         			<tr>
-        	''' % self.win.subject.get()
+        	'''  #% self.win.subject.get()
 
         for h in info_row[:-1]:
             mail_text += "<th>%s</th>" % str(h[0]).strip()
 
         mail_text += "</tr><tr>"
 
-        for l in info_row[:-1]:
-            l = str(l[1]).strip()
-            if l == "":
-                l = "0.00"
-            try:
-                l = Decimal(l).quantize(Decimal('.01'))
-            except Exception:
-                pass
+        for dr in info_row[:-1]:
+            l = str(dr[1]).strip()
+            if str(dr[0]).strip()!="卡号":
+                if l == "":
+                    l = "0.00"
+                try:
+                    l = Decimal(l).quantize(Decimal('.01'))
+                except Exception:
+                    pass
             l = str(l)
             mail_text += "<td>%s</td>" % l
 

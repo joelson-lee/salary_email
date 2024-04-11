@@ -7,7 +7,11 @@
 建议使用pyinstaller等打包工具打包为可执行程序使用
 #### 打包成exe命令
 ```
-pyinstaller --icon=./icon.ico --noconsole -p 自定义路径 -D SalaryEmailRun.py 
+pyinstaller --icon=./icon.ico --noconsole -p Python导入模块路径 -D SalaryEmailRun.py 
+或
+pyinstaller -i ./icon.ico -F -w SalaryEmailRun.py
+
+
 ```
 ### 工资条表格说明
 支持的文件格式为xls,xlsx文件，文件第一行为工资条事项，第一列为姓名，最后一列为邮箱地址，中间列可自行随意增减。如：
