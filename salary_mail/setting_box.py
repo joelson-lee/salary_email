@@ -44,7 +44,8 @@ class AccountPasswordWin(tk.Toplevel):
         row2 = tk.Frame(self)
         row2.pack(fill='x', padx=1, pady=5)
         tk.Label(row2, text='密码(授权码)：', width=15).pack(side=tk.LEFT)
-        tk.Entry(row2, textvariable=self.password, width=25, show='*').pack(side=tk.LEFT)
+        # tk.Entry(row2, textvariable=self.password, width=25, show='*').pack(side=tk.LEFT)
+        tk.Entry(row2, textvariable=self.password, width=25).pack(side=tk.LEFT)
 
         row3 = tk.Frame(self)
         row3.pack(fill='x')
