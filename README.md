@@ -11,11 +11,11 @@ pyinstaller --icon=./icon.ico --noconsole -p Python导入模块路径 -D SalaryE
 或
 pyinstaller -i ./icon.ico -F -w SalaryEmailRun.py
 
-
 ```
 ### 工资条表格说明
 支持的文件格式为xls,xlsx文件，文件第一行为工资条事项，第一列为姓名，最后一列为邮箱地址，中间列可自行随意增减。如：
 
+excel支持加密,在界面上输入Excel密码，即可打开加密文件，不输入即为未加密文件
 ![avatar](static/exc.png)
 
 

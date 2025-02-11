@@ -16,6 +16,7 @@ import tkinter.filedialog
 
 from smtplib import SMTP_SSL, SMTP
 from decimal import (Decimal)
+import msoffcrypto
 
 DEFAULT_COUNT = 4
 
@@ -33,6 +34,7 @@ class MainWin(tk.Tk):
         self.db = set_db()
         self.subject = tk.StringVar() # 邮件标题
         self.salary_file_path = tk.StringVar()
+        self.excel_file_password = tk.StringVar()
         self.send_date = tk.StringVar() # 发件时间
         self.sender_text = tk.StringVar()
         self.sender_name_text = tk.StringVar()
@@ -137,6 +139,11 @@ class MainWin(tk.Tk):
         tk.Entry(row4, textvariable=self.salary_file_path, width=self.label_width, justify=tk.CENTER).pack(side=tk.LEFT)
         tk.Button(row4, text='Open', command=self.get_salary_file_path, width=5).pack(side=tk.LEFT)
 
+        row10 = tk.Frame(self)
+        row10.pack(fill='x', padx=1, pady=5)
+        tk.Label(row10, text="Excel密码：", width=15).pack(side=tk.LEFT)
+        tk.Entry(row10, textvariable=self.excel_file_password, width=self.label_width, justify=tk.CENTER).pack(side=tk.LEFT)
+
         tk.Button(self, command=self.send_email, text='发送', width=20).pack(padx=1, pady=5)
         tk.Label(self, textvariable=self.show_percent ).pack(padx=1, pady=5)
 
@@ -221,6 +228,24 @@ class MainWin(tk.Tk):
             if file_name.rsplit('.', 1)[1].lower() not in ('xlsx', 'xls'):
                 tk.messagebox.showerror(title='文件错误', message='请选择正确的excel文件！')
                 return
+            decryptedExistFileFlag=False
+            if self.excel_file_password.get()!="":
+                # 解密Excel文件
+                with open(file_name, "rb") as encrypted_file:
+                    office_file = msoffcrypto.OfficeFile(encrypted_file)
+                    try:
+                        # 提供正确的密码
+                        office_file.load_key(password=self.excel_file_password.get())
+                        # 将解密内容写入新文件
+                        decrypted_file_name = "decrypted.xlsx" # + file_name
+                        with open(decrypted_file_name, "wb") as decrypted_file:
+                            office_file.decrypt(decrypted_file)
+                        file_name=decrypted_file_name
+                        decryptedExistFileFlag=True
+                    except Exception as e:
+                        tk.messagebox.showerror(title='文件解密错误', message='密码错误！\n{}'.format(e))
+                        return
+
             self.excel_file = ParseExcel(file_name=file_name)
             # 初始化进度条
             self.progressbar['maximum'] = self.excel_file.nrows
@@ -238,11 +263,17 @@ class MainWin(tk.Tk):
         self.done_count = 0  # 重置计数
         gen = self.excel_file.iter_salary_line()
         thread_count = self.thread_count.get() or DEFAULT_COUNT
+        total=0
+        for i in range(thread_count):
+            total
         for i in range(thread_count):
             print(i)
             send_thread = threading.Thread(target=self._send_email, args=(gen, self.gen_lock))  # 子线程发送邮件
             send_thread.setDaemon(True)
             send_thread.start()
+        if decryptedExistFileFlag:
+            os.remove(decrypted_file_name)
+            print("删除文件：",decrypted_file_name)
 
     def _send_email(self, gen, gen_lock):
         ob = SendEmail(self, self.__password.get(), gen, gen_lock)
